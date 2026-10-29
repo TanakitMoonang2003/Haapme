@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: haapme
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: node .output/server/index.mjs
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: 22.16.0
+      - key: NUXT_MONGODB_URI
+        sync: false
+      - key: NUXT_SESSION_PASSWORD
+        generateValue: true
+      - key: NUXT_PAYMENT_PROVIDER
+        value: mock
+      - key: NUXT_PUBLIC_PAYMENT_PROVIDER
+        value: mock

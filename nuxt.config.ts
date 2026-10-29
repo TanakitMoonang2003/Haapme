@@ -15,18 +15,18 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     // Server-only secrets (never sent to browser)
-    mongodbUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/hbdtome',
+    mongodbUri: process.env.NUXT_MONGODB_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/hbdtome',
     sessionPassword: process.env.NUXT_SESSION_PASSWORD || 'dev-secret-change-in-production',
-    paymentProvider: process.env.PAYMENT_PROVIDER || 'mock',
+    paymentProvider: process.env.NUXT_PAYMENT_PROVIDER || process.env.PAYMENT_PROVIDER || 'mock',
     promptpayId: process.env.PROMPTPAY_ID || '',
     // AES-256-GCM key สำหรับเข้ารหัสเบอร์พร้อมเพย์ (32 bytes = 64 hex chars)
     // สร้างด้วย: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-    promptpayEncryptionKey: process.env.PROMPTPAY_ENCRYPTION_KEY || '',
+    promptpayEncryptionKey: process.env.NUXT_PROMPTPAY_ENCRYPTION_KEY || process.env.PROMPTPAY_ENCRYPTION_KEY || '',
     // Public config (exposed to browser)
     public: {
       appName: 'A Little Wish',
       maxMessageLength: 500,
-      paymentProvider: process.env.PAYMENT_PROVIDER || 'mock',
+      paymentProvider: process.env.NUXT_PUBLIC_PAYMENT_PROVIDER || process.env.NUXT_PAYMENT_PROVIDER || process.env.PAYMENT_PROVIDER || 'mock',
     }
   }
 })

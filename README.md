@@ -23,8 +23,8 @@ Edit `.env` and set at minimum:
 | Variable | Description |
 |---|---|
 | `MONGODB_URI` | MongoDB connection string (Atlas or local) |
-| `NUXT_SESSION_PASSWORD` | Random 32-char secret (run `openssl rand -hex 32`) |
-| `PAYMENT_PROVIDER` | `mock` (dev) or `promptpay` (when configured) |
+| `NUXT_SESSION_PASSWORD` | Random secret; generate 32 bytes with `openssl rand -hex 32` |
+| `PAYMENT_PROVIDER` | `mock` (the only provider currently implemented) |
 
 ### 3. Run development server
 
@@ -32,7 +32,33 @@ Edit `.env` and set at minimum:
 npm run dev
 ```
 
-### 4. Production build
+### 4. Deploy to Render
+
+1. Create a MongoDB database (for example, MongoDB Atlas) and copy its connection URI.
+   Ensure the database's network access list permits connections from your Render service.
+2. In Render, choose **New → Blueprint** and connect this repository. Render reads
+   [`render.yaml`](./render.yaml) to create the web service.
+3. When prompted, set `NUXT_MONGODB_URI` to the MongoDB connection URI. Render
+   generates `NUXT_SESSION_PASSWORD` for the service.
+4. Deploy. The health check uses `/`; Render supplies the port used by the Nuxt
+   Node server.
+
+The Blueprint uses the free web-service plan and the `mock` payment provider.
+Free services may sleep when idle. The app currently only implements `mock`;
+setting `promptpay` will fail until a real payment provider is implemented.
+
+If configuring owner PromptPay IDs, also set `NUXT_PROMPTPAY_ENCRYPTION_KEY` in
+Render to a persistent 64-character hexadecimal key. Generate it with:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+Keep this key secret and back it up securely. Changing or losing it makes
+previously stored PromptPay IDs impossible to decrypt. The value is not generated
+by the Blueprint because it must be hexadecimal and remain stable across deploys.
+
+### 5. Production build
 
 ```bash
 npm run build
