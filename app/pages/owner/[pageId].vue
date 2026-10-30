@@ -21,6 +21,19 @@ watch(
   }
 )
 
+// อนุภาคลอยในพื้นหลัง (ค่าคงที่ เพื่อเลี่ยง hydration mismatch)
+const particles = [
+  { left: 8, size: 14, delay: 0, dur: 14, char: '♡' },
+  { left: 18, size: 10, delay: 3, dur: 11, char: '✦' },
+  { left: 28, size: 16, delay: 6, dur: 16, char: '♡' },
+  { left: 39, size: 9, delay: 1, dur: 12, char: '✦' },
+  { left: 50, size: 13, delay: 8, dur: 15, char: '♡' },
+  { left: 61, size: 11, delay: 4, dur: 13, char: '✦' },
+  { left: 71, size: 17, delay: 9, dur: 17, char: '♡' },
+  { left: 81, size: 10, delay: 2, dur: 11, char: '✦' },
+  { left: 91, size: 15, delay: 7, dur: 14, char: '♡' },
+]
+
 // =====================================================
 // ✨ ระบบสุ่มแบบอลังการ: สับไพ่ → นับถอยหลัง → เปิดการ์ด + confetti
 // =====================================================
@@ -226,30 +239,79 @@ async function handleTokenConfirmed(token: string) {
       />
     </div>
 
-    <div class="mx-auto max-w-lg px-4 py-12">
-      <div v-if="pageLoading" class="text-center text-sm text-[#8C7868]">กำลังโหลด...</div>
-      <div v-else-if="pageError" class="rounded-lg border border-red-200 bg-red-50 p-5 text-center text-sm text-red-600">
+    <!-- อนุภาคลอยขึ้นในพื้นหลัง -->
+    <div class="particles" aria-hidden="true">
+      <span
+        v-for="(p, i) in particles"
+        :key="i"
+        class="particle"
+        :style="{
+          left: p.left + '%',
+          fontSize: p.size + 'px',
+          animationDelay: p.delay + 's',
+          animationDuration: p.dur + 's',
+        }"
+      >
+        {{ p.char }}
+      </span>
+    </div>
+
+    <div class="content mx-auto max-w-lg px-4 py-12">
+      <!-- Loading -->
+      <div v-if="pageLoading" class="flex flex-col items-center gap-4 py-16 text-sm text-[#8C7868]" aria-busy="true">
+        <div class="relative flex h-14 w-14 items-center justify-center rounded-xl bg-[#f8d6bd]">
+          <span class="ring" aria-hidden="true"></span>
+          <svg viewBox="0 0 24 24" class="heartbeat h-6 w-6 fill-[#795b43]" aria-hidden="true">
+            <path d="M12 21s-9-5.8-9-12a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6.2-9 12-9 12Z" />
+          </svg>
+        </div>
+        <span class="flex items-center gap-1">
+          กำลังโหลด
+          <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        </span>
+      </div>
+
+      <div
+        v-else-if="pageError"
+        class="error-card rounded-lg border border-red-200 bg-red-50 p-5 text-center text-sm text-red-600"
+        role="alert"
+      >
         {{ pageError }}
       </div>
 
       <template v-else-if="page">
         <!-- Header -->
         <div class="mb-6 text-center">
-          <div class="mb-2 inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-50 px-3 py-2">
+          <div
+            class="reveal badge mb-2 inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-50 px-3 py-2"
+            style="--d: 0.1s"
+          >
             <span class="dot" />
             <span class="text-xs tracking-widest text-[#8C7868]">OWNER VIEW</span>
           </div>
-          <h1 class="font-playfair text-4xl text-[#49382f]">{{ page.displayName }}</h1>
-          <p v-if="page.daysUntilBirthday === 0" class="mt-1 text-xs text-emerald-600 font-semibold">
-            🎂 วันนี้คือวันเกิดของคุณ!
+          <h1 class="reveal title-shimmer font-playfair text-4xl text-[#49382f]" style="--d: 0.25s">
+            {{ page.displayName }}
+          </h1>
+          <p
+            v-if="page.daysUntilBirthday === 0"
+            class="reveal mt-1 text-xs text-emerald-600 font-semibold"
+            style="--d: 0.4s"
+          >
+            <span class="cake">🎂</span> วันนี้คือวันเกิดของคุณ!
           </p>
-          <p v-else class="mt-1 text-xs text-[#b8a697]">อีก {{ page.daysUntilBirthday }} วันถึงวันเกิด</p>
+          <p v-else class="reveal mt-1 text-xs text-[#b8a697]" style="--d: 0.4s">
+            อีก <span class="countdown">{{ page.daysUntilBirthday }}</span> วันถึงวันเกิด
+          </p>
         </div>
 
         <!-- ยังไม่ authed -->
-        <div v-if="!tokenConfirmed">
+        <div v-if="!tokenConfirmed" class="reveal" style="--d: 0.55s">
           <OwnerTokenInput @confirmed="handleTokenConfirmed" />
-          <div v-if="error" class="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+          <div
+            v-if="error"
+            class="error-card mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600"
+            role="alert"
+          >
             ❌ {{ error }}
           </div>
         </div>
@@ -258,7 +320,10 @@ async function handleTokenConfirmed(token: string) {
         <template v-else>
 
           <!-- ====== ส่วนพร้อมเพย์ ====== -->
-          <div class="mb-6 rounded-lg border border-[#eee6dc] bg-white p-4 shadow-sm">
+          <div
+            class="reveal card mb-6 rounded-lg border border-[#eee6dc] bg-white p-4 shadow-sm"
+            style="--d: 0.5s"
+          >
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-sm font-semibold text-[#49382f]">💳 รับกำลังใจเป็นเงิน</p>
@@ -270,7 +335,7 @@ async function handleTokenConfirmed(token: string) {
                 </p>
               </div>
               <button
-                class="shrink-0 rounded border border-[#d4c4b0] px-3 py-1.5 text-xs text-[#795b43] transition hover:bg-[#fdf9f4]"
+                class="pp-btn shrink-0 rounded border border-[#d4c4b0] px-3 py-1.5 text-xs text-[#795b43] transition hover:bg-[#fdf9f4]"
                 @click="showPromptpayForm = !showPromptpayForm"
               >
                 {{ hasPromptpay ? 'เปลี่ยน' : 'กรอก' }}
@@ -278,40 +343,43 @@ async function handleTokenConfirmed(token: string) {
             </div>
 
             <!-- ฟอร์มกรอกพร้อมเพย์ -->
-            <div v-if="showPromptpayForm" class="mt-4">
-              <label for="ppId" class="mb-1 block text-xs text-[#8C7868]">
-                พร้อมเพย์ (เบอร์โทร 10 หลัก หรือ เลขบัตรประชาชน 13 หลัก)
-              </label>
-              <div class="flex gap-2">
-                <input
-                  id="ppId"
-                  v-model="promptpayPhone"
-                  type="text"
-                  maxlength="13"
-                  placeholder="0812345678 หรือ 1234567890123"
-                  class="flex-1 rounded border border-[#d4c4b0] bg-[#F6F3ED] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#795b43]/40"
-                  @keydown.enter="savePromptpay"
-                />
-                <button
-                  :disabled="promptpayLoading"
-                  class="rounded bg-[#795b43] px-3 py-2 text-sm text-white transition hover:bg-[#5c4535] disabled:opacity-50"
-                  @click="savePromptpay"
-                >
-                  {{ promptpayLoading ? '...' : 'บันทึก' }}
-                </button>
+            <Transition name="expand">
+              <div v-if="showPromptpayForm" class="mt-4">
+                <label for="ppId" class="mb-1 block text-xs text-[#8C7868]">
+                  พร้อมเพย์ (เบอร์โทร 10 หลัก หรือ เลขบัตรประชาชน 13 หลัก)
+                </label>
+                <div class="flex gap-2">
+                  <input
+                    id="ppId"
+                    v-model="promptpayPhone"
+                    type="text"
+                    maxlength="13"
+                    placeholder="0812345678 หรือ 1234567890123"
+                    class="field flex-1 rounded border border-[#d4c4b0] bg-[#F6F3ED] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#795b43]/40"
+                    @keydown.enter="savePromptpay"
+                  />
+                  <button
+                    :disabled="promptpayLoading"
+                    class="go-btn rounded bg-[#795b43] px-3 py-2 text-sm text-white transition hover:bg-[#5c4535] disabled:opacity-50"
+                    @click="savePromptpay"
+                  >
+                    {{ promptpayLoading ? '...' : 'บันทึก' }}
+                  </button>
+                </div>
+                <p class="mt-1 text-xs text-[#b8a697]">
+                  จะถูกเข้ารหัสก่อนบันทึก — ใช้สร้าง QR เท่านั้น ไม่แสดงให้ใครเห็น
+                </p>
+                <p v-if="promptpayError" class="error-text mt-1 text-xs text-red-500">{{ promptpayError }}</p>
+                <p v-if="promptpaySaved" class="pop-in mt-1 text-xs text-emerald-600">✅ บันทึกแล้ว</p>
               </div>
-              <p class="mt-1 text-xs text-[#b8a697]">
-                จะถูกเข้ารหัสก่อนบันทึก — ใช้สร้าง QR เท่านั้น ไม่แสดงให้ใครเห็น
-              </p>
-              <p v-if="promptpayError" class="mt-1 text-xs text-red-500">{{ promptpayError }}</p>
-              <p v-if="promptpaySaved" class="mt-1 text-xs text-emerald-600">✅ บันทึกแล้ว</p>
-            </div>
+            </Transition>
           </div>
           <!-- ====== จบส่วนพร้อมเพย์ ====== -->
 
           <!-- Advance wish notice -->
           <div v-if="drawResult && drawResult.advanceWishCount > 0"
-            class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            class="reveal mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700"
+            style="--d: 0.65s">
             ⏰ มีคำอวยพรล่วงหน้า {{ drawResult.advanceWishCount }} ใบ รอเปิดในปีหน้า
           </div>
 
@@ -333,11 +401,12 @@ async function handleTokenConfirmed(token: string) {
 
           <!-- ไม่มีการ์ด -->
           <div v-else-if="drawResult && drawResult.totalEligible === 0 && !loading"
-            class="rounded-xl border border-[#eee6dc] bg-white p-8 text-center shadow-sm">
-            <div class="text-4xl">💌</div>
+            class="reveal rounded-xl border border-[#eee6dc] bg-white p-8 text-center shadow-sm"
+            style="--d: 0.1s">
+            <div class="empty-icon text-4xl">💌</div>
             <p class="mt-3 text-sm text-[#8C7868]">ยังไม่มีคำอวยพรสำหรับปีนี้</p>
             <p class="mt-1 text-xs text-[#b8a697]">แชร์ลิงก์ให้เพื่อนๆ ส่งมาให้คุณ</p>
-            <NuxtLink :to="`/wish/${pageId}`" class="mt-3 block text-xs text-[#795b43] underline">
+            <NuxtLink :to="`/wish/${pageId}`" class="link-underline mt-3 inline-block text-xs text-[#795b43] hover:text-[#49382f]">
               /wish/{{ pageId }}
             </NuxtLink>
           </div>
@@ -361,33 +430,39 @@ async function handleTokenConfirmed(token: string) {
               class="gift-in mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4"
             >
               <div class="flex items-center justify-between gap-3">
-                <p class="text-sm font-semibold text-[#49382f]">🎁 ผู้ส่งแนบของขวัญมา</p>
+                <p class="text-sm font-semibold text-[#49382f]">
+                  <span class="gift-icon">🎁</span> ผู้ส่งแนบของขวัญมา
+                </p>
                 <button
                   type="button"
-                  class="shrink-0 rounded-full border border-[#d4c4b0] bg-white px-3 py-1.5 text-xs text-[#795b43] transition hover:bg-[#fdf9f4]"
+                  class="pp-btn shrink-0 rounded-full border border-[#d4c4b0] bg-white px-3 py-1.5 text-xs text-[#795b43] transition hover:bg-[#fdf9f4]"
                   :aria-expanded="showGiftDetails"
                   @click="showGiftDetails = !showGiftDetails"
                 >
                   {{ showGiftDetails ? 'ซ่อนรายละเอียด' : 'ดูรายละเอียด' }}
                 </button>
               </div>
-              <div v-if="showGiftDetails" class="mt-3 border-t border-amber-200 pt-3">
-                <p class="text-sm font-semibold text-[#49382f]">
-                  ฿{{ drawResult.contribution.amount }} {{ drawResult.contribution.currency }}
-                </p>
-                <p class="mt-1 text-xs text-[#8C7868]">
-                  {{ drawResult.contribution.statusLabel }}
-                </p>
-                <p class="mt-1 text-xs text-[#8C7868]">
-                  สถานะนี้อ้างอิงจากการแจ้งของผู้ส่ง ระบบไม่ได้ตรวจสอบสลิปหรือยืนยันยอดเงินจริง
-                </p>
-              </div>
+              <Transition name="expand">
+                <div v-if="showGiftDetails" class="mt-3 border-t border-amber-200 pt-3">
+                  <p class="text-sm font-semibold text-[#49382f]">
+                    ฿{{ drawResult.contribution.amount }} {{ drawResult.contribution.currency }}
+                  </p>
+                  <p class="mt-1 text-xs text-[#8C7868]">
+                    {{ drawResult.contribution.statusLabel }}
+                  </p>
+                  <p class="mt-1 text-xs text-[#8C7868]">
+                    สถานะนี้อ้างอิงจากการแจ้งของผู้ส่ง ระบบไม่ได้ตรวจสอบสลิปหรือยืนยันยอดเงินจริง
+                  </p>
+                </div>
+              </Transition>
             </div>
           </div>
 
-          <div v-else-if="loading" class="py-8 text-center text-sm text-[#8C7868]">กำลังสุ่มการ์ด...</div>
+          <div v-else-if="loading" class="py-8 text-center text-sm text-[#8C7868]">
+            กำลังสุ่มการ์ด<span class="dots ml-1" aria-hidden="true"><i></i><i></i><i></i></span>
+          </div>
 
-          <div v-else-if="error" class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+          <div v-else-if="error" class="error-card rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600" role="alert">
             {{ error }}
             <button class="mt-2 block text-xs underline"
               @click="tokenConfirmed = false; ownerToken = null">
@@ -407,10 +482,13 @@ async function handleTokenConfirmed(token: string) {
           </div>
 
           <!-- Share link -->
-          <div class="mt-8 rounded-lg border border-[#eee6dc] bg-[#fdf9f4] p-4">
+          <div
+            class="reveal card mt-8 rounded-lg border border-[#eee6dc] bg-[#fdf9f4] p-4"
+            style="--d: 0.8s"
+          >
             <p class="mb-1 text-xs tracking-widest text-[#b8a697]">ลิงก์สำหรับเพื่อน</p>
             <NuxtLink :to="`/wish/${pageId}`"
-              class="block break-all text-sm text-[#795b43] underline hover:text-[#49382f]">
+              class="link-underline block break-all text-sm text-[#795b43] hover:text-[#49382f]">
               /wish/{{ pageId }}
             </NuxtLink>
           </div>
@@ -429,6 +507,12 @@ async function handleTokenConfirmed(token: string) {
   background-image:
     radial-gradient(ellipse at 50% 45%, rgba(245, 222, 198, 0.45) 20%, rgba(250, 243, 233, 0.3) 60%, transparent 100%),
     linear-gradient(180deg, #f7f2ea 0%, #f7f2ea 100%);
+  background-size: 140% 140%, 100% 100%;
+  animation: glow-drift 12s ease-in-out infinite alternate;
+}
+.content {
+  position: relative;
+  z-index: 1;
 }
 .dot {
   display: block;
@@ -437,7 +521,155 @@ async function handleTokenConfirmed(token: string) {
   flex-shrink: 0;
   border-radius: 50%;
   background-color: #8b6b4a;
+  animation: pulse-dot 2s ease-in-out infinite;
 }
+
+/* ================= อนุภาคพื้นหลัง ================= */
+.particles {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.particle {
+  position: absolute;
+  bottom: -30px;
+  color: #d9a679;
+  opacity: 0;
+  animation-name: float-up;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* ================= Entrance ================= */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  animation: fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--d, 0s);
+}
+.badge {
+  box-shadow: 0 2px 10px rgba(139, 107, 74, 0.12);
+}
+.title-shimmer {
+  background: linear-gradient(100deg, #49382f 0%, #49382f 40%, #b98a5e 50%, #49382f 60%, #49382f 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation:
+    fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.25s forwards,
+    shimmer 5s ease-in-out 1.5s infinite;
+}
+.countdown {
+  display: inline-block;
+  font-weight: 600;
+  color: #8b6b4a;
+  animation: soft-pop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.7s both;
+}
+.cake {
+  display: inline-block;
+  animation: party 1.4s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+/* ================= การ์ด / ปุ่ม / ฟอร์ม ================= */
+.card {
+  transition: box-shadow 0.3s ease;
+}
+.card:focus-within {
+  box-shadow: 0 10px 30px rgba(121, 91, 67, 0.15);
+}
+.field {
+  transition: box-shadow 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
+}
+.field:focus {
+  border-color: #795b43;
+  background-color: #fff;
+}
+.pp-btn,
+.go-btn {
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+.pp-btn:hover,
+.go-btn:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(121, 91, 67, 0.22);
+}
+.pp-btn:active,
+.go-btn:not(:disabled):active {
+  transform: translateY(0) scale(0.97);
+}
+.pop-in {
+  animation: soft-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.error-text {
+  animation: fade-in 0.3s ease-out both;
+}
+.error-card {
+  animation: shake 0.5s ease-in-out, fade-in 0.3s ease-out;
+}
+.gift-icon {
+  display: inline-block;
+  animation: wiggle 2.4s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+.empty-icon {
+  display: inline-block;
+  animation: bob 3s ease-in-out infinite;
+}
+
+/* กางออก / พับเก็บ */
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.3s ease;
+}
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* ลิงก์ */
+.link-underline {
+  text-decoration: none;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 1px;
+  transition: background-size 0.3s ease;
+}
+.link-underline:hover {
+  background-size: 100% 2px;
+}
+
+/* ================= Loading ================= */
+.ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 0.75rem;
+  border: 2px solid #f0b48a;
+  animation: ripple 1.8s ease-out infinite;
+}
+.heartbeat {
+  animation: heartbeat 1.2s ease-in-out infinite;
+  transform-origin: center;
+}
+.dots {
+  display: inline-flex;
+  gap: 3px;
+}
+.dots i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #8b6b4a;
+  animation: hop 1s ease-in-out infinite;
+}
+.dots i:nth-child(2) { animation-delay: 0.15s; }
+.dots i:nth-child(3) { animation-delay: 0.3s; }
 
 /* ================= เวทีสุ่ม ================= */
 .stage {
@@ -513,6 +745,136 @@ async function handleTokenConfirmed(token: string) {
 .s3 { bottom: 26%; left: 10%; animation-delay: 0.7s; }
 .s4 { bottom: 20%; right: 14%; animation-delay: 1s; }
 
+/* ================= เปิดการ์ด ================= */
+.reveal-wrap {
+  position: relative;
+  perspective: 1200px;
+}
+.reveal-aura {
+  position: absolute;
+  inset: -24px;
+  border-radius: 28px;
+  background: radial-gradient(circle, rgba(255, 210, 130, 0.9) 0%, rgba(255, 190, 120, 0.4) 50%, transparent 75%);
+  filter: blur(18px);
+  opacity: 0;
+  animation: aura-burst 1.8s ease-out both;
+  pointer-events: none;
+}
+.reveal-card {
+  position: relative;
+  transform-style: preserve-3d;
+  animation: card-flip 1.05s cubic-bezier(0.2, 0.9, 0.25, 1.15) both;
+}
+.gift-in {
+  animation: gift-slide 0.7s 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+/* ================= แสงวาบ ================= */
+.screen-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.95), rgba(255, 233, 190, 0.5) 55%, transparent 80%);
+  animation: flash-out 0.7s ease-out both;
+}
+
+/* ================= Confetti ================= */
+.confetti-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  overflow: hidden;
+}
+.confetti-piece {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  border-radius: 2px;
+  opacity: 0;
+  animation-name: confetti-fly;
+  animation-timing-function: cubic-bezier(0.1, 0.75, 0.35, 1);
+  animation-fill-mode: both;
+}
+.confetti-piece.round {
+  border-radius: 50%;
+}
+
+/* ปุ่มสุ่ม */
+.draw-btn:not(:disabled):hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 8px 22px rgba(121, 91, 67, 0.25);
+}
+.draw-btn:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+/* ================= Keyframes ================= */
+@keyframes fade-up {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(139, 107, 74, 0.5); }
+  50% { box-shadow: 0 0 0 6px rgba(139, 107, 74, 0); }
+}
+@keyframes shimmer {
+  0% { background-position: 120% 0; }
+  100% { background-position: -120% 0; }
+}
+@keyframes glow-drift {
+  from { background-position: 40% 45%, 0 0; }
+  to { background-position: 60% 55%, 0 0; }
+}
+@keyframes float-up {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.55; }
+  90% { opacity: 0.35; }
+  100% { transform: translateY(-110vh) rotate(25deg); opacity: 0; }
+}
+@keyframes soft-pop {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes party {
+  0%, 100% { transform: rotate(-8deg) scale(1); }
+  50% { transform: rotate(8deg) scale(1.2); }
+}
+@keyframes wiggle {
+  0%, 60%, 100% { transform: rotate(0deg); }
+  70% { transform: rotate(-12deg); }
+  80% { transform: rotate(10deg); }
+  90% { transform: rotate(-6deg); }
+}
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes ripple {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+@keyframes heartbeat {
+  0%, 40%, 100% { transform: scale(1); }
+  10% { transform: scale(1.25); }
+  25% { transform: scale(1.1); }
+}
+@keyframes hop {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(7px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(3px); }
+}
+
 @keyframes shuffle {
   0%   { transform: translate(0, 0) rotate(0deg); }
   25%  { transform: translate(calc(70px + var(--i) * 6px), -18px) rotate(calc(12deg + var(--i) * 3deg)); }
@@ -539,31 +901,6 @@ async function handleTokenConfirmed(token: string) {
   from { transform: translateY(8px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
-
-/* ================= เปิดการ์ด ================= */
-.reveal-wrap {
-  position: relative;
-  perspective: 1200px;
-}
-.reveal-aura {
-  position: absolute;
-  inset: -24px;
-  border-radius: 28px;
-  background: radial-gradient(circle, rgba(255, 210, 130, 0.9) 0%, rgba(255, 190, 120, 0.4) 50%, transparent 75%);
-  filter: blur(18px);
-  opacity: 0;
-  animation: aura-burst 1.8s ease-out both;
-  pointer-events: none;
-}
-.reveal-card {
-  position: relative;
-  transform-style: preserve-3d;
-  animation: card-flip 1.05s cubic-bezier(0.2, 0.9, 0.25, 1.15) both;
-}
-.gift-in {
-  animation: gift-slide 0.7s 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
-}
-
 @keyframes card-flip {
   0%   { transform: rotateY(-100deg) scale(0.4) translateY(40px); opacity: 0; filter: brightness(1.8); }
   55%  { transform: rotateY(12deg) scale(1.1) translateY(-8px); opacity: 1; filter: brightness(1.25); }
@@ -579,41 +916,9 @@ async function handleTokenConfirmed(token: string) {
   from { transform: translateY(24px) scale(0.92); opacity: 0; }
   to   { transform: translateY(0) scale(1); opacity: 1; }
 }
-
-/* ================= แสงวาบ ================= */
-.screen-flash {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  pointer-events: none;
-  background: radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.95), rgba(255, 233, 190, 0.5) 55%, transparent 80%);
-  animation: flash-out 0.7s ease-out both;
-}
 @keyframes flash-out {
   from { opacity: 1; }
   to   { opacity: 0; }
-}
-
-/* ================= Confetti ================= */
-.confetti-layer {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  pointer-events: none;
-  overflow: hidden;
-}
-.confetti-piece {
-  position: absolute;
-  top: 42%;
-  left: 50%;
-  border-radius: 2px;
-  opacity: 0;
-  animation-name: confetti-fly;
-  animation-timing-function: cubic-bezier(0.1, 0.75, 0.35, 1);
-  animation-fill-mode: both;
-}
-.confetti-piece.round {
-  border-radius: 50%;
 }
 @keyframes confetti-fly {
   0%   { transform: translate(-50%, -50%) rotate(0deg) scale(0); opacity: 1; }
@@ -623,15 +928,6 @@ async function handleTokenConfirmed(token: string) {
     transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy) + 70vh)) rotate(var(--rot)) scale(0.8);
     opacity: 0;
   }
-}
-
-/* ปุ่มสุ่ม */
-.draw-btn:not(:disabled):hover {
-  transform: translateY(-2px) scale(1.04);
-  box-shadow: 0 8px 22px rgba(121, 91, 67, 0.25);
-}
-.draw-btn:not(:disabled):active {
-  transform: scale(0.97);
 }
 
 /* เคารพผู้ใช้ที่ปิดแอนิเมชัน */
@@ -645,7 +941,31 @@ async function handleTokenConfirmed(token: string) {
   .reveal-card,
   .gift-in,
   .screen-flash,
-  .stage-text {
+  .stage-text,
+  .particle,
+  .cake,
+  .gift-icon,
+  .empty-icon,
+  .heartbeat,
+  .ring,
+  .dots i,
+  .error-card,
+  .birthday-background,
+  .dot {
+    animation: none !important;
+  }
+  .reveal,
+  .title-shimmer {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+  .title-shimmer {
+    color: #49382f;
+    -webkit-text-fill-color: #49382f;
+  }
+  .countdown,
+  .pop-in {
     animation: none !important;
   }
   .deck-card:not(:first-child) {
