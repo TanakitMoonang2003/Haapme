@@ -20,8 +20,6 @@ const copied = ref(false)
 const copiedLink = ref(false)
 const copiedOwner = ref(false)
 
-const today = new Date().toISOString().split('T')[0]!
-
 // สร้าง base URL
 const requestUrl = useRequestURL()
 const baseUrl = computed(() => {
@@ -32,7 +30,7 @@ const baseUrl = computed(() => {
 function validate(): boolean {
   fieldErrors.value = {}
   if (!dateOfBirth.value) {
-    fieldErrors.value.dob = 'กรุณาเลือกวันเกิด'
+    fieldErrors.value.dob = 'กรุณาระบุวันเกิด'
   }
   if (displayName.value.length > 60) {
     fieldErrors.value.name = 'ชื่อยาวเกินไป (สูงสุด 60 ตัวอักษร)'
@@ -177,19 +175,7 @@ function copyOwnerLink() {
       <label for="dateOfBirth" class="mb-1 block text-sm text-[#49382f]">
         วันเกิด <span class="text-red-400" aria-hidden="true">*</span>
       </label>
-      <input
-        id="dateOfBirth"
-        v-model="dateOfBirth"
-        type="date"
-        :max="today"
-        class="w-full rounded border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#795b43]/40"
-        :class="fieldErrors.dob ? 'border-red-400 bg-red-50' : 'border-[#d4c4b0] bg-[#F6F3ED]'"
-        :aria-describedby="fieldErrors.dob ? 'dob-error' : undefined"
-        :aria-invalid="!!fieldErrors.dob"
-      />
-      <p v-if="fieldErrors.dob" id="dob-error" class="mt-1 text-xs text-red-500" role="alert">
-        {{ fieldErrors.dob }}
-      </p>
+      <BirthdayDateInput v-model="dateOfBirth" :error="fieldErrors.dob" />
     </div>
 
     <p v-if="error" class="rounded bg-red-50 px-3 py-2 text-sm text-red-600" role="alert">
